@@ -352,11 +352,11 @@ class UserProfileView(Resource):
         return make_response(jsonify(user_data=user_data), 200)
 
 
-class UserMatches(Resource):
+class UserMatchesApi(Resource):
 
     @token_required
     def get(self, user):
-        matches = UserMatches.query.filter(UserMatches.user_id_1 == user.public_id | UserMatches.user_id_2 == user.public_id).all()
+        matches = UserMatches.query.filter((UserMatches.user_id_1 == user.public_id) | (UserMatches.user_id_2 == user.public_id)).all()
         matches_data = []
         for match in matches:
             if match.user_id_1 == user.public_id:
