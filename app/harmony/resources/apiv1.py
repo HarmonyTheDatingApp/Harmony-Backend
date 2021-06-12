@@ -284,7 +284,10 @@ class UserSwipeUpdate(Resource):
             db.session.add(user_swipes)
             db.session.commit()
         right_swiped_users = request_data['right_swipe_ids']
+        print(1)
+        swipe_user_updates = []
         for user_id in right_swiped_users:
+            print(2)
             user_details = UserAccount.query.filter_by(public_id=user_id).first()
             swiped_user_swipe_list = UserSwipes.query.filter_by(user_id=user_details.id).first()
             print(swiped_user_swipe_list.swipe_ids)
@@ -304,10 +307,17 @@ class UserSwipeUpdate(Resource):
                 db.session.add(notification12)
                 db.session.add(notification21)
                 db.session.commit()
-            user_swipes.swipe_ids.append(user_id)
-        db.session.add(user_swipes)
-        db.session.commit()
-
+            swipe_user_updates.append(user_id)
+        if not user_swipes.swipe_ids:
+            user_swipes.swipe_ids = swipe_user_updates
+            db.session.add(user_swipes)
+            db.session.commit()
+        else:
+            existing_ids = user_swipes.swipe_ids
+            user_swipes.swipe_ids = existing_ids + swipe_user_updates
+            db.session.add(user_swipes)
+            db.session.commit()
+        print(user_swipes.swipe_ids)
         # Updating Recommendation Swipe List
         try:
             update_url = HRS_BASE_URL + '/users/{0}/update-right-swipes/'.format(user.public_id)
