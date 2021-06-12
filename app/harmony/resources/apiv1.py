@@ -389,10 +389,14 @@ class UserMatchesApi(Resource):
             else:
                 user_id = match.user_id_1
             user_details = UserAccount.query.filter_by(public_id=user_id).first()
-
+            user_images = UserImages.query.filter_by(user_id=user_details.public_id).all()
+            profile_img = "https://static.vecteezy.com/system/resources/previews/000/423/286/original/avatar-icon-vector-illustration.jpg"
+            if len(user_images)>0:
+                profile_img = user_images[0].img_src
             matches_data.append({
                 'match_id': match.id,
                 'name': user_details.f_name,
+                'img_src":profile_img,
                 'public_id': user_details.public_id
             })
         return make_response(jsonify(matches=matches_data, success=True), 200)
