@@ -273,7 +273,7 @@ class UserSwipeUpdate(Resource):
     @token_required
     def post(self, user):
         request_data = request.get_json()
-        user_swipes = UserSwipes.query.filter_by(user_id=user.public_id).first()
+        user_swipes = UserSwipes.query.filter_by(user_id=user.id).first()
         if not user_swipes:
             user_swipes = UserSwipes(user_id=user.id)
             user_swipes.swipe_ids = []
@@ -285,8 +285,11 @@ class UserSwipeUpdate(Resource):
             db.session.commit()
         right_swiped_users = request_data['right_swipe_ids']
         for user_id in right_swiped_users:
-            swiped_user_swipe_list = UserSwipes.query.filter_by(user_id=user_id).first()
+            user_details = UserAccount.query.filter_by(public_id=user_id).first()
+            swiped_user_swipe_list = UserSwipes.query.filter_by(user_id=user_details.id).first()
+            print(swiped_user_swipe_list.swipe_ids)
             if user.public_id in swiped_user_swipe_list.swipe_ids:
+                print("Notification Feed")
                 notification12 = UserNotificationFeed(to_user_id=user.public_id,
                                                       from_user_id=user_id,
                                                       notification_type_id=1)
