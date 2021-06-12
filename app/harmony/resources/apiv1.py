@@ -120,8 +120,7 @@ class UserSettings(Resource):
             preference.distance = request_data['distance']
         if 'ytmusic_link' in request_data:
             user.ytmusic_link = request_data['gender']
-        if 'spotify_link' in request_data:
-            user.spotify_link = request_data['spotify_link']
+        if 'spotify_access_token' in request_data:
             token = request_data['spotify_access_token']
             spotify = tk.Spotify(token)
             tracks = spotify.current_user_top_tracks(limit=50)
@@ -134,16 +133,20 @@ class UserSettings(Resource):
         get_user_url = '/users/{0}'.format(user.public_id)
         user_details = requests.get(HRS_BASE_URL + get_user_url)
         if user_details.status_code == 200:
+            print("user exists in db")
+            update_url = HRS_BASE_URL + '/users/' + user.public_id + '/preferences/'
             try:
-                res = requests.post(HRS_BASE_URL + '/users/', json={
+                res = requests.post(update_url, json={
                     "pref_age_min": preference.age_min,
                     "pref_age_max": preference.age_max,
                     "pref_interested_in": preference.interested_gender,
                     "pref_distance": preference.distance
                 })
+                print(res.json())
             except Exception as e:
                 print(e)
         else:
+            print("Does not exist")
             try:
                 res = requests.post(HRS_BASE_URL + '/users/', json={
                     "id": user.public_id,
@@ -152,13 +155,14 @@ class UserSettings(Resource):
                     "gender": user.gender,
                     "pref_interested_in": preference.interested_gender,
                     "location": {
-                        "long": user.long,
-                        "lat": user.lat
+                        "long": float(user.long),
+                        "lat": float(user.lat)
                     },
                     "dob": user.birth_date.strftime("%Y-%m-%d"),
                     "tracks": track_ids,
                     "pref_distance": preference.distance
                 })
+                print(res.json())
             except Exception as e:
                 print(e)
         return make_response(jsonify({'success': True}), 200)
@@ -216,7 +220,7 @@ class UserProfileSuggestions(Resource):
         recommendations = []
         get_recommendation_url = HRS_BASE_URL + "/users/{0}/recommend/".format(user.public_id)
         try:
-            result = requests.get(get_recommendation_url, params={"lat": user.lat, "long": user.long, "limit": limit})
+            result = requests.get(get_recommendation_url, params={"limit": limit})
             if result.status_code == 200:
                 recommendations = result.recommendations[(index - 1) * offset: limit]
         except Exception as e:
