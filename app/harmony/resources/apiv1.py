@@ -81,14 +81,11 @@ class UserSettings(Resource):
 
         # preferences
         preference = UserPreference.query.filter_by(user_id=user.id).first()
-        print(preference)
-        print(user)
         if not preference:
             print("creating preference")
             preference = UserPreference(user_id=user.id)
             db.session.add(preference)
             db.session.commit()
-            print(preference.id)
 
         # passions
         user_passions = UserPassions.query.filter_by(user_id=user.id).all()
@@ -101,8 +98,6 @@ class UserSettings(Resource):
                 passion = UserPassions(user_id=user.id, passion_id=passion_id)
                 db.session.add(passion)
                 db.session.commit()
-                print(passion_id)
-
         if 'age_min' in request_data:
             preference.age_min = request_data['age_min']
         if 'age_max' in request_data:
@@ -147,24 +142,21 @@ class UserSettings(Resource):
                 print(e)
         else:
             print("Does not exist")
-            try:
-                res = requests.post(HRS_BASE_URL + '/users/', json={
-                    "id": user.public_id,
-                    "pref_age_min": preference.age_min,
-                    "pref_age_max": preference.age_max,
-                    "gender": user.gender,
-                    "pref_interested_in": preference.interested_gender,
-                    "location": {
-                        "long": float(user.long),
-                        "lat": float(user.lat)
-                    },
-                    "dob": user.birth_date.strftime("%Y-%m-%d"),
-                    "tracks": track_ids,
-                    "pref_distance": preference.distance
-                })
-                print(res.json())
-            except Exception as e:
-                print(e)
+            res = requests.post(HRS_BASE_URL + '/users/', json={
+                "id": user.public_id,
+                "pref_age_min": preference.age_min,
+                "pref_age_max": preference.age_max,
+                "gender": user.gender,
+                "pref_interested_in": preference.interested_gender,
+                "location": {
+                    "long": float(user.long),
+                    "lat": float(user.lat)
+                },
+                "dob": user.birth_date.strftime("%Y-%m-%d"),
+                "tracks": track_ids,
+                "pref_distance": preference.distance
+            })
+            print(res.json())
         return make_response(jsonify({'success': True}), 200)
 
 
@@ -293,6 +285,13 @@ class UserSwipeUpdate(Resource):
             print(swiped_user_swipe_list.swipe_ids)
             if user.public_id in swiped_user_swipe_list.swipe_ids:
                 print("Notification Feed")
+                match_notif = NotificationType.query.get(1)
+                if not match_notif:
+                    match_notif = NotificationType(id=1,
+                                                   name="Match",
+                                                   message="You have a match")
+                    db.session.add(match_notif)
+                    db.session.commit()
                 notification12 = UserNotificationFeed(to_user_id=user.public_id,
                                                       from_user_id=user_id,
                                                       notification_type_id=1)
@@ -336,17 +335,12 @@ class NotificationFeed(Resource):
         notification_feed = UserNotificationFeed.query.filter_by(to_user_id=user.public_id).all()
         notifications = []
         for notification in notification_feed:
-            if notification.created > request_data['last_feed_refresh_date']:
-                new_notif = True
-            else:
-                new_notif = False
             from_user = UserAccount.query.filter_by(public_id=notification.from_user_id).first()
             notification_type = NotificationType.query.get(notification.notification_type_id)
             notifications.append({
                 'from_name': from_user.f_name,
                 'public_id': from_user.public_id,
                 'messsage': notification_type.message,
-                'new_notif': new_notif
             })
         return make_response(jsonify(notifications=notifications), 200)
 
