@@ -221,14 +221,15 @@ class UserProfileSuggestions(Resource):
         get_recommendation_url = HRS_BASE_URL + "/users/{0}/recommend/".format(user.public_id)
         try:
             result = requests.get(get_recommendation_url, params={"limit": limit})
+            print(result.json())
             if result.status_code == 200:
-                recommendations = result.recommendations[(index - 1) * offset: limit]
+                recommendations = result.json()['recommendation'][(index - 1) * offset: limit]
         except Exception as e:
             print(e)
         if not recommendations:
             return make_response(jsonify(recommendations=recommendations), 200)
         recommended_data = []
-        user_swipes = UserSwipes.query.filter_by(user_id=user.public_id).first()
+        user_swipes = UserSwipes.query.filter_by(user_id=user.id).first()
         for recommendation in recommendations:
             if recommendation in user_swipes.swipe_ids:
                 continue
@@ -249,7 +250,7 @@ class UserProfileSuggestions(Resource):
             recommended_data.append({
                 'public_id': r_user.public_id,
                 'images': images,
-                'age': (datetime.datetime.utcnow() - r_user.birth_date).year,
+                'age': (datetime.datetime.utcnow().year - r_user.birth_date.year),
                 'name': r_user.f_name,
                 'passions': passions,
                 'bio': r_user.bio,
@@ -351,11 +352,11 @@ class UserProfileView(Resource):
         return make_response(jsonify(user_data=user_data), 200)
 
 
-class UserMatches(Resource):
+class UserMatchesApi(Resource):
 
     @token_required
     def get(self, user):
-        matches = UserMatches.query.filter(UserMatches.user_id_1 == user.public_id | UserMatches.user_id_2 == user.public_id).all()
+        matches = UserMatches.query.filter((UserMatches.user_id_1 == user.public_id) | (UserMatches.user_id_2 == user.public_id)).all()
         matches_data = []
         for match in matches:
             if match.user_id_1 == user.public_id:
