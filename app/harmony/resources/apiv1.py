@@ -230,6 +230,15 @@ class UserProfileSuggestions(Resource):
             return make_response(jsonify(recommendations=recommendations), 200)
         recommended_data = []
         user_swipes = UserSwipes.query.filter_by(user_id=user.id).first()
+        if not user_swipes:
+            user_swipes = UserSwipes(user_id=user.id)
+            user_swipes.swipe_ids = []
+            db.session.add(user_swipes)
+            db.session.commit()
+        if not user_swipes.swipe_ids:
+            user_swipes.swipe_ids = []
+            db.session.add(user_swipes)
+            db.session.commit()
         for recommendation in recommendations:
             if recommendation in user_swipes.swipe_ids:
                 continue
@@ -265,6 +274,15 @@ class UserSwipeUpdate(Resource):
     def post(self, user):
         request_data = request.get_json()
         user_swipes = UserSwipes.query.filter_by(user_id=user.public_id).first()
+        if not user_swipes:
+            user_swipes = UserSwipes(user_id=user.id)
+            user_swipes.swipe_ids = []
+            db.session.add(user_swipes)
+            db.session.commit()
+        if not user_swipes.swipe_ids:
+            user_swipes.swipe_ids = []
+            db.session.add(user_swipes)
+            db.session.commit()
         right_swiped_users = request_data['right_swipe_ids']
         for user_id in right_swiped_users:
             swiped_user_swipe_list = UserSwipes.query.filter_by(user_id=user_id).first()
@@ -364,6 +382,7 @@ class UserMatchesApi(Resource):
             else:
                 user_id = match.user_id_1
             user_details = UserAccount.query.filter_by(public_id=user_id).first()
+
             matches_data.append({
                 'match_id': match.id,
                 'name': user_details.f_name,

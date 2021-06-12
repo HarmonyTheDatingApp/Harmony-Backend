@@ -50,6 +50,7 @@ class SignUp(Resource):
             db.session.add(new_user)
             db.session.commit()
             swipe_list = UserSwipes(user_id=new_user.id)
+            swipe_list.swipe_ids = []
             db.session.add(swipe_list)
             db.session.commit()
             print(new_user)
