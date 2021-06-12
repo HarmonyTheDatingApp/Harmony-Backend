@@ -396,7 +396,7 @@ class UserMatchesApi(Resource):
             matches_data.append({
                 'match_id': match.id,
                 'name': user_details.f_name,
-                'img_src":profile_img,
+                'img_src':profile_img,
                 'public_id': user_details.public_id
             })
         return make_response(jsonify(matches=matches_data, success=True), 200)
